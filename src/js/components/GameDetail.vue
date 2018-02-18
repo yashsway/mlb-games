@@ -1,8 +1,8 @@
 <template>
   <div class="container detail">
     <div class="main">
-        <div class="game_day">{{ gameDate }}</div>
-        <div class="innings_section">
+        <div class="game_day">{{ readableDate }}</div>
+        <div class="innings_section" v-show="this.linescore.length!=[]">
             <table class="innings_table">
                 <thead>
                     <tr>
@@ -22,7 +22,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="batters_section">
+        <div class="batters_section" v-show="this.linescore.length!=[]">
             <div class="game_teams">
                 <div class="toggle home_stats" v-on:click="home_default=!home_default"><span :class="home_default ? 'bold' : 'no_bold'">{{ home.name }}</span></div>
                 <span class="pipe">|</span>
@@ -55,7 +55,12 @@
                 </el-table>
             </div>
         </div>
+        <div class="no_data" v-show="this.linescore.length==[]">
+            No data yet!
+        </div>
+        <el-button type="info"><router-link :to="{ name: 'game_list', query: { gameDate: this.$route.query.gameDate }}">Back</router-link></el-button>
     </div>
+    
   </div>
 </template>
 
@@ -78,6 +83,12 @@ export default {
             batters: { home: { 'batter': []}, away: { 'batter': []}},
             batter_stats: ['ab','r','h','rbi','bb','so','avg'],
             home_default: true,
+        }
+    },
+    computed: {
+        // human readable date set at start, no recalcs reqd.
+        readableDate: function() {
+            return moment(this.gameDate).isValid() ? moment(gameDate).format('ddd MMM DD YYYY') : moment(this.$route.query.gameDate).format('ddd MMM DD YYYY');
         }
     },
     methods: {
@@ -107,6 +118,10 @@ export default {
 
 <style scoped>
 /* Kept styles as close to name conventions as possible. Could be incredibly more modular with PostCSS @apply and :root */
+a {
+  color: #000;
+  text-decoration: none;
+}
 .container.detail {
     grid-area: data;
     align-self: stretch;
@@ -140,5 +155,14 @@ export default {
 }
 .game_day {
     font-size: 2rem;
+}
+.no_data {
+    color: #909399;
+    font-size: 2rem;
+    padding: 20px;
+    height: 30vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 </style>

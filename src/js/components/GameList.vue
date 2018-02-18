@@ -11,7 +11,7 @@
             <el-table-column label="Games & Status" align="center">
                 <!-- Really odd behavior here. for some reason I'm unable to define a separate template in the same scope for a scenario where linescore isn't defined. Temporarily put all tags in the same scope, bit repetitive--> 
                 <template slot-scope="props">
-                    <router-link :to="{ name: 'game_detail', params: { gameID: props.row.game_pk }, query: { gameURL: props.row.game_data_directory }}">
+                    <router-link :to="{ name: 'game_detail', params: { gameID: props.row.game_pk }, query: { gameDate: receivedDate, gameURL: props.row.game_data_directory }}">
                         <p v-if="props.row.linescore!==undefined" :class="props.row.linescore.r.home > props.row.linescore.r.away ? 'bold_team' : ''"><i class="el-icon-star-on" v-show="props.row.home_team_name==favTeam"></i>{{ props.row.home_team_name }}</p>
                         <p v-if="props.row.linescore!==undefined" :class="props.row.linescore.r.away > props.row.linescore.r.home ? 'bold_team' : ''"><i class="el-icon-star-on" v-show="props.row.away_team_name==favTeam"></i>{{ props.row.away_team_name }}</p>
                         <p v-if="props.row.linescore!==undefined" class="italic_status">{{ props.row.status.status }}</p>
@@ -23,7 +23,7 @@
             </el-table-column>
             <el-table-column label="Score" align="center">
                 <template slot-scope="props">
-                    <router-link :to="{ name: 'game_detail', params: { gameID: props.row.game_pk }, query: { gameURL: props.row.game_data_directory }}">
+                    <router-link :to="{ name: 'game_detail', params: { gameID: props.row.game_pk }, query: { gameDate: receivedDate, gameURL: props.row.game_data_directory }}">
                         <p v-if="props.row.linescore!==undefined">{{ props.row.linescore.r.home }}</p>
                         <p v-if="props.row.linescore!==undefined">{{ props.row.linescore.r.away }}</p>
                         <p class="italic_status">-</p>
@@ -54,6 +54,10 @@ export default {
         // get data from the API. optional: can override here with custom date, pass in year, month and day, in YYYY, MM and DD respectively
         this.setData();
     },
+    beforeMount: function() {
+        // set date if it exists already
+        this.selectedDate = this.$route.query.gameDate!==undefined ? this.$route.query.gameDate : this.selectedDate;
+    },
     // today - tracks of the current user's date
     // selectedDate - tracks date in the date picker
     // receivedDate - tracks date received from the API - used for verification
@@ -79,6 +83,8 @@ export default {
     watch: {
         // watch selectedDate for changes
         selectedDate: function(newDate,prevDate) {
+            // set URL query for history compatibility
+            this.$route.query.gameDate = this.selectedDate;
             // if valid, convert date and pass on to setData to get new scoreboard from API
             var update = moment(newDate).isValid() ? moment(newDate) : this.today;
             this.setData(update.format("YYYY"),update.format("MM"),update.format("DD"));

@@ -9,10 +9,14 @@
     "build": "cross-env NODE_ENV=production NODE_APP_MODE=app webpack --progress --hide-modules",
     "unit": "cross-env BABEL_ENV=test karma start test/unit/karma.conf.js --single-run",
     "test": "npm run unit",
-    "lint": "eslint --ext .js,.vue src test/unit/specs"
+    "lint": "eslint --ext .js,.vue src test/unit/specs",
+    "start": "npm run build && node server.js NODE_PORT=8000"
   },
   "dependencies": {
+    "express": "^4.16.2",
     "moment": "^2.20.1",
+    "path": "^0.12.7",
+    "serve-static": "^1.13.2",
     "vue": "^2.4.2",
     "vue-router": "^2.7.0",
     "vuejs-datepicker": "^0.9.26"
