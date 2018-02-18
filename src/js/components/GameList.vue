@@ -94,7 +94,7 @@ export default {
         setData: _.debounce(function(year = this.today.format("YYYY"),month = this.today.format("MM"),day = this.today.format("DD")) {
             // this method is used to get and process data from the MLB api. default date is the current user's date. takes 3 parameters.
             // inject year month and day into API URL, get scoreboard
-            axios.get(`http://gd2.mlb.com/components/game/mlb/year_${year}/month_${month}/day_${day}/master_scoreboard.json`)
+            axios.get(`https://gd2.mlb.com/components/game/mlb/year_${year}/month_${month}/day_${day}/master_scoreboard.json`)
             .then((response) => {
                 // store once
                 var mlbData = response.data.data.games;

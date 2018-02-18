@@ -2,7 +2,7 @@
   <div class="container detail">
     <div class="main">
         <div class="game_day">{{ readableDate }}</div>
-        <div class="innings_section" v-show="this.linescore.length!=[]">
+        <div class="innings_section" v-show="this.linescore!==undefined && this.linescore.length!=[]">
             <table class="innings_table">
                 <thead>
                     <tr>
@@ -22,7 +22,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="batters_section" v-show="this.linescore.length!=[]">
+        <div class="batters_section" v-show="this.batters.home.batter!==undefined && this.batters.home.batter.length!=[] && this.batters.away.batter.length!=[]">
             <div class="game_teams">
                 <div class="toggle home_stats" v-on:click="home_default=!home_default"><span :class="home_default ? 'bold' : 'no_bold'">{{ home.name }}</span></div>
                 <span class="pipe">|</span>
@@ -55,10 +55,10 @@
                 </el-table>
             </div>
         </div>
-        <div class="no_data" v-show="this.linescore.length==[]">
+        <div class="no_data" v-show="this.linescore!==undefined && this.linescore.length==[]">
             No data yet!
         </div>
-        <el-button type="info"><router-link :to="{ name: 'game_list', query: { gameDate: this.$route.query.gameDate }}">Back</router-link></el-button>
+        <el-button class="back_to_list" type="info"><router-link :to="{ name: 'game_list', query: { gameDate: this.$route.query.gameDate }}">Back</router-link></el-button>
     </div>
     
   </div>
@@ -82,19 +82,19 @@ export default {
             linescore: [],
             batters: { home: { 'batter': []}, away: { 'batter': []}},
             batter_stats: ['ab','r','h','rbi','bb','so','avg'],
-            home_default: true,
+            home_default: true
         }
     },
     computed: {
         // human readable date set at start, no recalcs reqd.
         readableDate: function() {
-            return moment(this.gameDate).isValid() ? moment(gameDate).format('ddd MMM DD YYYY') : moment(this.$route.query.gameDate).format('ddd MMM DD YYYY');
+            return moment(this.gameDate).isValid() ? moment(this.gameDate).format('ddd MMM DD YYYY') : moment(this.$route.query.gameDate).format('ddd MMM DD YYYY');
         }
     },
     methods: {
         // get data from MLB API based on URL provided, no defaults here
         setData: function(gameURL) {
-            axios.get(`http://gd2.mlb.com${gameURL}/boxscore.json`)
+            axios.get(`https://gd2.mlb.com${gameURL}/boxscore.json`)
             .then((response) => {
                 // set once
                 var mlbData = response.data.data.boxscore;
@@ -106,7 +106,9 @@ export default {
                 // find and set game date
                 this.gameDate = mlbData.date;
                 // find and set batter statistics. keep individual batter statisitics only for home and away. store in separate keys.
-                this.batters = {'home': _.pick(_.filter(mlbData.batting, { 'team_flag': 'home' })[0],['batter']), 'away': _.pick(_.filter(mlbData.batting, { 'team_flag': 'away' })[0],['batter'])};
+                var homeBatters = _.pick(_.filter(mlbData.batting, { 'team_flag': 'home' })[0],['batter']);
+                var awayBatters = _.pick(_.filter(mlbData.batting, { 'team_flag': 'away' })[0],['batter']);
+                this.batters = {'home': homeBatters, 'away': awayBatters };
             })
             .catch((error) => {
                 console.log(error);
@@ -164,5 +166,8 @@ a {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+.back_to_list {
+    margin: 1.5rem 0rem;
 }
 </style>

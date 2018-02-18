@@ -26,4 +26,4 @@ npm run dev
 
 ## DEMO
 
-You can also check out the deployed app on: ~COMING SOON~
+You can also check out the deployed app on: [Deployed on Heroku](https://yash-mlbgames.herokuapp.com)

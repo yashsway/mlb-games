@@ -41,7 +41,10 @@ const webpackConfig = {
         dead_code: true,
       },
     }),
-    new LodashModuleReplacementPlugin(),
+    new LodashModuleReplacementPlugin({
+      'collections': true,
+      'shorthands': true
+    }),
     // extract css into its own file
     new ExtractTextPlugin({
       filename: './css/[name].[contenthash].css',
