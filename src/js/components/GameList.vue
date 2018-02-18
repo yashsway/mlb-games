@@ -9,13 +9,14 @@
     <div class="main">
         <el-table :data="games" class="table_games" v-if="games.length>=1">
             <el-table-column label="Games & Status" align="center">
+                <!-- Really odd behavior here. for some reason I'm unable to define a separate template in the same scope for a scenario where linescore isn't defined. Temporarily put all tags in the same scope, bit repetitive--> 
                 <template slot-scope="props">
                     <router-link :to="{ name: 'game_detail', params: { gameID: props.row.game_pk }, query: { gameURL: props.row.game_data_directory }}">
-                        <p v-if="props.row.linescore!==undefined" :class="props.row.linescore.r.home > props.row.linescore.r.away ? 'bold_team' : ''">{{ props.row.home_team_name }}</p>
-                        <p v-if="props.row.linescore!==undefined" :class="props.row.linescore.r.away > props.row.linescore.r.home ? 'bold_team' : ''">{{ props.row.away_team_name }}</p>
+                        <p v-if="props.row.linescore!==undefined" :class="props.row.linescore.r.home > props.row.linescore.r.away ? 'bold_team' : ''"><i class="el-icon-star-on" v-show="props.row.home_team_name==favTeam"></i>{{ props.row.home_team_name }}</p>
+                        <p v-if="props.row.linescore!==undefined" :class="props.row.linescore.r.away > props.row.linescore.r.home ? 'bold_team' : ''"><i class="el-icon-star-on" v-show="props.row.away_team_name==favTeam"></i>{{ props.row.away_team_name }}</p>
                         <p v-if="props.row.linescore!==undefined" class="italic_status">{{ props.row.status.status }}</p>
-                        <p v-if="props.row.linescore==undefined">{{ props.row.home_team_name }}</p>
-                        <p v-if="props.row.linescore==undefined">{{ props.row.away_team_name }}</p>
+                        <p v-if="props.row.linescore==undefined"><i class="el-icon-star-on" v-show="props.row.home_team_name==favTeam"></i>{{ props.row.home_team_name }}</p>
+                        <p v-if="props.row.linescore==undefined"><i class="el-icon-star-on" v-show="props.row.away_team_name==favTeam"></i>{{ props.row.away_team_name }}</p>
                         <p v-if="props.row.linescore==undefined" class="italic_status">{{ props.row.status.status }}</p>
                     </router-link>
                 </template>
@@ -72,7 +73,7 @@ export default {
     computed: {
         // human readable date set at start, no recalcs reqd.
         readableDate: function() {
-            return moment(this.receivedDate).format('ddd MMM DD YYYY') || moment(this.selectedDate).format('ddd MMM DD YYYY');
+            return moment(this.receivedDate).isValid() ? moment(this.receivedDate).format('ddd MMM DD YYYY') : this.today.format('ddd MMM DD YYYY');
         }
     },
     watch: {

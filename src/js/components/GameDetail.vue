@@ -1,6 +1,7 @@
 <template>
   <div class="container detail">
     <div class="main">
+        <div class="game_day">{{ gameDate }}</div>
         <div class="innings_section">
             <table class="innings_table">
                 <thead>
@@ -71,8 +72,8 @@ export default {
     data() {
         return {
             gameDate: '',
-            home: {},
-            away: {},
+            home: { 'code': '-' },
+            away: { 'code': '-' },
             linescore: [],
             batters: { home: { 'batter': []}, away: { 'batter': []}},
             batter_stats: ['ab','r','h','rbi','bb','so','avg'],
@@ -136,5 +137,8 @@ export default {
 }
 .no-bold {
     font-weight: normal;
+}
+.game_day {
+    font-size: 2rem;
 }
 </style>
