@@ -1,9 +1,12 @@
 <template>
   <div class="container detail">
     <div class="main">
+        <!-- use computed prop here for date -->
         <div class="game_day">{{ readableDate }}</div>
+        <!-- short circuit and don't show unless data exists -->
         <div class="innings_section" v-show="this.linescore!==undefined && this.linescore.length!=[]">
             <table class="innings_table">
+                <!-- key needed for rendered tags so vue can update correctly -->
                 <thead>
                     <tr>
                         <th>Team</th>
@@ -22,13 +25,16 @@
                 </tbody>
             </table>
         </div>
+        <!-- short circuit and don't show unless data exists -->
         <div class="batters_section" v-show="this.batters.home.batter!==undefined && this.batters.home.batter.length!=[] && this.batters.away.batter.length!=[]">
             <div class="game_teams">
+                <!-- bold buttons based on which team is being shown -->
                 <div class="toggle home_stats" v-on:click="home_default=!home_default"><span :class="home_default ? 'bold' : 'no_bold'">{{ home.name }}</span></div>
                 <span class="pipe">|</span>
                 <div class="toggle away_stats" v-on:click="home_default=!home_default"><span :class="!home_default ? 'bold' : 'no_bold'">{{ away.name }}</span></div>
             </div>
             <div class="game_batters">
+                <!-- show if home is default. statistics to show are dynamic and set in component data. -->
                 <el-table :data="batters.home.batter" class="batters_table" v-show="home_default">
                     <el-table-column label="Name" align="center" width="150">
                         <template slot-scope="props">
@@ -41,6 +47,7 @@
                         </template>
                     </el-table-column>
                 </el-table>
+                <!-- statistics to choose are dynamic and set in the component data. iterates and makes appr # of columns. don't show if home default is true -->
                 <el-table :data="batters.away.batter" class="batters_table" v-show="!home_default">
                     <el-table-column label="Name" align="center">
                         <template slot-scope="props">
@@ -55,9 +62,11 @@
                 </el-table>
             </div>
         </div>
+        <!-- shortcircuit and don't show if no data available -->
         <div class="no_data" v-show="this.linescore!==undefined && this.linescore.length==[]">
             No data yet!
         </div>
+        <!-- go back to the previous list view with the exact date that was originally passed -->
         <el-button class="back_to_list" type="info"><router-link :to="{ name: 'game_list', query: { gameDate: this.$route.query.gameDate }}">Back</router-link></el-button>
     </div>
     
@@ -72,6 +81,7 @@ import _ from 'lodash';
 export default {
     name: 'game_detail',
     beforeMount: function() {
+        // get data with the URL provided in the query from the previous list view
         this.setData(this.$route.query.gameURL);
     },
     data() {
@@ -94,6 +104,7 @@ export default {
     methods: {
         // get data from MLB API based on URL provided, no defaults here
         setData: function(gameURL) {
+            // interpolate gameURL into API string
             axios.get(`https://gd2.mlb.com${gameURL}/boxscore.json`)
             .then((response) => {
                 // set once

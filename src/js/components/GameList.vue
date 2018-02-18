@@ -2,8 +2,22 @@
   <div class="container games">
     <div class="date">
         <span class="current_date">MLB games on <el-button class="slide" type="default" icon="el-icon-arrow-left" v-on:click="dateSlide('dsc')">&#8592;</el-button>{{ readableDate }}<el-button class="slide" type="default" icon="el-icon-arrow-right" v-on:click="dateSlide('asc')">&#8594;</el-button></span>
-        <div class="datepicker">
-            <datepicker input-class="datepicker_input" :value="''" v-model="selectedDate" format="yyyy-MM-dd" placeholder="Pick a day"></datepicker>
+        <div class="options_container">
+            <div class="picker">
+                <span class="picker_label">Favorite Team:</span>
+                <el-select v-model="favTeam" placeholder="Pick your favorite team">
+                    <el-option
+                    v-for="team in teams"
+                    :key="team.value"
+                    :label="team.label"
+                    :value="team.value">
+                    </el-option>
+                </el-select>
+            </div>
+            <div class="picker">
+                <span class="picker_label">Selected Day:</span>
+                <datepicker input-class="datepicker_input" :value="''" v-model="selectedDate" format="yyyy-MM-dd" placeholder="Pick a day"></datepicker>
+            </div>
         </div>
     </div>
     <div class="main">
@@ -72,6 +86,7 @@ export default {
             nextDayDate: '',
             games: [],
             favTeam: 'Blue Jays',
+            teams: []
         }
     },
     computed: {
@@ -89,6 +104,11 @@ export default {
             var update = moment(newDate).isValid() ? moment(newDate) : this.today;
             this.setData(update.format("YYYY"),update.format("MM"),update.format("DD"));
         },
+        // watch favTeam for changes
+        favTeam: function(newFav,oldFav) {
+            // sort if changed
+            this.sortByFav();
+        }
     },
     methods: {
         setData: _.debounce(function(year = this.today.format("YYYY"),month = this.today.format("MM"),day = this.today.format("DD")) {
@@ -112,6 +132,12 @@ export default {
                 this.games = _.map(this.games, function(data) {
                     return _.pick(data,['home_team_name','away_team_name','status.status','linescore.r','game_data_directory','game_pk']);
                 });
+                // expensive function, limit runs. flat Map into array team names from each game. then eliminate duplicates by value
+                if (this.games!==undefined && this.games.length!==0) {
+                    this.teams = _.uniqBy(_.flatMap(this.games, function(data) {
+                        return [{ 'value': data.home_team_name, 'label': data.home_team_name},{ 'value': data.away_team_name, 'label': data.away_team_name}];
+                    }), 'value');
+                }
                 // sort list by favorite 
                 this.sortByFav();
             })
@@ -145,19 +171,32 @@ a {
     align-self: stretch;
     padding: 1rem;
 }
-.date {
+.date_container {
     display: flex;
     flex-direction: column;
     justify-content: center;
+}
+.options_container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex: 0 1 auto;
 }
 .current_date {
     font-size: 2rem;
     font-weight: bold;
     margin: 5px 0px;
 }
-.datepicker {
+.picker {
+    font-family: inherit;
     align-self: center;
     margin: 10px;
+    & .picker_label {
+        color: #909399;
+    }
+    & > * {
+        display: inline-block;
+    }
 }
 .table_games {
     width: 100%;
