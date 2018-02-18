@@ -5,7 +5,7 @@ const serveStatic = require('serve-static');
 const app = express();
 
 
-app.set('port', (process.env.NODE_PORT || 8000));
+app.set('port', (process.env.PORT || 8000));
 app.use(serveStatic(path.join(__dirname, '/dist')));
 app.listen(app.get('port'), (err) => {
   if (err) {
