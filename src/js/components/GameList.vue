@@ -3,7 +3,7 @@
     <div class="date">
         <span class="current_date">MLB games on <el-button class="slide" type="default" icon="el-icon-arrow-left" v-on:click="dateSlide('dsc')">&#8592;</el-button>{{ readableDate }}<el-button class="slide" type="default" icon="el-icon-arrow-right" v-on:click="dateSlide('asc')">&#8594;</el-button></span>
         <div class="datepicker">
-            <datepicker input-class="datepicker_input" v-model="selectedDate" format="yyyy-MM-dd" placeholder="Pick a day"></datepicker>
+            <datepicker input-class="datepicker_input" :value="''" v-model="selectedDate" format="yyyy-MM-dd" placeholder="Pick a day"></datepicker>
         </div>
     </div>
     <div class="main">
@@ -47,10 +47,9 @@ export default {
     components: {
         Datepicker
     },
-    beforeMount: function() {
+    created: function() {
         // set today and receivedDate, to the user's current date
         this.today = moment();
-        this.selectedDate = this.today.add(2,'hours').format("YYYY-MM-DD");
         // get data from the API. optional: can override here with custom date, pass in year, month and day, in YYYY, MM and DD respectively
         this.setData();
     },
@@ -73,20 +72,20 @@ export default {
     computed: {
         // human readable date set at start, no recalcs reqd.
         readableDate: function() {
-            return moment(this.receivedDate).format('ddd MMM DD YYYY');
+            return moment(this.receivedDate).format('ddd MMM DD YYYY') || moment(this.selectedDate).format('ddd MMM DD YYYY');
         }
     },
     watch: {
         // watch selectedDate for changes
         selectedDate: function(newDate,prevDate) {
             // if valid, convert date and pass on to setData to get new scoreboard from API
-            var update = moment(this.selectedDate).isValid() ? moment(this.selectedDate) : this.today;
+            var update = moment(newDate).isValid() ? moment(newDate) : this.today;
             this.setData(update.format("YYYY"),update.format("MM"),update.format("DD"));
         },
     },
     methods: {
-        // this method is used to get and process data from the MLB api. default date is the current user's date. takes 3 parameters.
         setData: _.debounce(function(year = this.today.format("YYYY"),month = this.today.format("MM"),day = this.today.format("DD")) {
+            // this method is used to get and process data from the MLB api. default date is the current user's date. takes 3 parameters.
             // inject year month and day into API URL, get scoreboard
             axios.get(`http://gd2.mlb.com/components/game/mlb/year_${year}/month_${month}/day_${day}/master_scoreboard.json`)
             .then((response) => {
@@ -114,15 +113,15 @@ export default {
                 console.log(error);
             });
         }, 500),
-        // this method is used to sort a list of games by a favorite team. default team is set in data object. two parameters: one for a team and one for the unmanipulated list of games
         sortByFav: function(teamName = this.favTeam) {
+            // this method is used to sort a list of games by a favorite team. default team is set in data object. two parameters: one for a team and one for the unmanipulated list of games
             // find game objects that contain a home_team or away_team equal to fav team name, then spread rest of the array that don't contain fav team after it
             var sorted = [ _.find(this.games, function(g) { return g.home_team_name == teamName || g.away_team_name == teamName; }), ...(_.filter(this.games, function(data) { return data.home_team_name != teamName && data.away_team_name != teamName; }))];
             // if any undefined present in the sorted list, set to blank, else store games as the sorted list
             this.games = sorted.includes(undefined) ? [] : sorted;
         },
         dateSlide: function(slide) {
-            this.selectedDate = slide=='asc' ? moment(this.selectedDate).add(1, 'days').format("YYYY-MM-DD") : moment(this.selectedDate).subtract(1, 'days').format("YYYY-MM-DD");
+            this.selectedDate = (slide=='asc') ? moment(this.receivedDate).add(1,'days')._d : moment(this.receivedDate).subtract(1,'days')._d;
         }
     }
 }
