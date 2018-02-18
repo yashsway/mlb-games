@@ -16,14 +16,14 @@
             </div>
             <div class="picker">
                 <span class="picker_label">Selected Day:</span>
-                <datepicker input-class="datepicker_input" :value="''" v-model="selectedDate" format="yyyy-MM-dd" placeholder="Pick a day"></datepicker>
+                <datepicker input-class="datepicker_input" v-model="selectedDate" format="yyyy-MM-dd" placeholder="Pick a day"></datepicker>
             </div>
         </div>
     </div>
     <div class="main">
         <el-table :data="games" class="table_games" v-if="games.length>=1">
+            <!-- Really odd behavior here. for some reason I'm unable to define a separate template in the same scope for a scenario where linescore isn't defined. Temporarily put all tags in the same scope, bit repetitive--> 
             <el-table-column label="Games & Status" align="center">
-                <!-- Really odd behavior here. for some reason I'm unable to define a separate template in the same scope for a scenario where linescore isn't defined. Temporarily put all tags in the same scope, bit repetitive--> 
                 <template slot-scope="props">
                     <router-link :to="{ name: 'game_detail', params: { gameID: props.row.game_pk }, query: { gameDate: receivedDate, gameURL: props.row.game_data_directory }}">
                         <p v-if="props.row.linescore!==undefined" :class="props.row.linescore.r.home > props.row.linescore.r.away ? 'bold_team' : ''"><i class="el-icon-star-on" v-show="props.row.home_team_name==favTeam"></i>{{ props.row.home_team_name }}</p>
@@ -138,7 +138,7 @@ export default {
                         return [{ 'value': data.home_team_name, 'label': data.home_team_name},{ 'value': data.away_team_name, 'label': data.away_team_name}];
                     }), 'value');
                 }
-                // sort list by favorite 
+                // sort list by favorite
                 this.sortByFav();
             })
             .catch((error) => {
