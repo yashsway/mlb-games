@@ -35,3 +35,8 @@ npm run build && npm start
 ## DEMO
 
 You can also check out the deployed app on: [Deployed on Heroku](https://yash-mlbgames.herokuapp.com)
+
+## TODO
+- breakdown certain pieces in views to smaller components for more robustness
+- fix ESLint not detecting PostCSS and CSSNext
+- construct component methods around promises, especially when method itself contains an async

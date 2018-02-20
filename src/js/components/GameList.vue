@@ -1,11 +1,13 @@
 <template>
   <div class="container games">
     <div class="date">
+        <!-- if left or right arrows clicked, call method to add or sub date resp. -->
         <span class="current_date">MLB games on <el-button class="slide" type="default" icon="el-icon-arrow-left" v-on:click="dateSlide('dsc')">&#8592;</el-button>{{ readableDate }}<el-button class="slide" type="default" icon="el-icon-arrow-right" v-on:click="dateSlide('asc')">&#8594;</el-button></span>
         <div class="options_container">
             <div class="picker">
                 <span class="picker_label">Favorite Team:</span>
-                <el-select v-model="favTeam" placeholder="Pick your favorite team">
+                <!-- populate with team names present in current day -->
+                <el-select class="primary_font" v-model="favTeam" placeholder="Pick your favorite team">
                     <el-option
                     v-for="team in teams"
                     :key="team.value"
@@ -25,7 +27,8 @@
             <!-- Really odd behavior here. for some reason I'm unable to define a separate template in the same scope for a scenario where linescore isn't defined. Temporarily put all tags in the same scope, bit repetitive--> 
             <el-table-column label="Games & Status" align="center">
                 <template slot-scope="props">
-                    <router-link :to="{ name: 'game_detail', params: { gameID: props.row.game_pk }, query: { gameDate: receivedDate, gameURL: props.row.game_data_directory }}">
+                    <!-- set link to game detail view with required params (has props) and query vars -->
+                    <router-link :to="{ name: 'game_detail', params: { gameID: props.row.game_pk, location: props.row.location, venue: props.row.venue, winning_pitcher: props.row.winning_pitcher, losing_pitcher: props.row.losing_pitcher, home_runs: props.row.home_runs }, query: { gameDate: receivedDate, gameURL: props.row.game_data_directory }}">
                         <p v-if="props.row.linescore!==undefined" :class="props.row.linescore.r.home > props.row.linescore.r.away ? 'bold_team' : ''"><i class="el-icon-star-on" v-show="props.row.home_team_name==favTeam"></i>{{ props.row.home_team_name }}</p>
                         <p v-if="props.row.linescore!==undefined" :class="props.row.linescore.r.away > props.row.linescore.r.home ? 'bold_team' : ''"><i class="el-icon-star-on" v-show="props.row.away_team_name==favTeam"></i>{{ props.row.away_team_name }}</p>
                         <p v-if="props.row.linescore!==undefined" class="italic_status">{{ props.row.status.status }}</p>
@@ -37,7 +40,8 @@
             </el-table-column>
             <el-table-column label="Score" align="center">
                 <template slot-scope="props">
-                    <router-link :to="{ name: 'game_detail', params: { gameID: props.row.game_pk }, query: { gameDate: receivedDate, gameURL: props.row.game_data_directory }}">
+                    <!-- set link to game detail view with required params (has props) and query vars -->
+                    <router-link :to="{ name: 'game_detail', params: { gameID: props.row.game_pk, location: props.row.location, venue: props.row.venue, winning_pitcher: props.row.winning_pitcher, losing_pitcher: props.row.losing_pitcher, home_runs: props.row.home_runs }, query: { gameDate: receivedDate, gameURL: props.row.game_data_directory }}">
                         <p v-if="props.row.linescore!==undefined">{{ props.row.linescore.r.home }}</p>
                         <p v-if="props.row.linescore!==undefined">{{ props.row.linescore.r.away }}</p>
                         <p class="italic_status">-</p>
@@ -45,7 +49,10 @@
                 </template>
             </el-table-column>
         </el-table>
-        <div class="table_none" v-if="games.length<=0">No games today!</div>
+        <!-- show if still loading, layout image in the future? -->
+        <div class="no_data" v-show="!updated">Loading...</div>
+        <!-- show if no games on current day -->
+        <div class="no_data" v-if="updated && games.length<=0">No games today!</div>
     </div>
   </div>
 </template>
@@ -62,15 +69,11 @@ export default {
     components: {
         Datepicker
     },
-    created: function() {
-        // set today and receivedDate, to the user's current date
-        this.today = moment();
-        // get data from the API. optional: can override here with custom date, pass in year, month and day, in YYYY, MM and DD respectively
-        this.setData();
-    },
     beforeMount: function() {
         // set date if it exists already
         this.selectedDate = this.$route.query.gameDate!==undefined ? this.$route.query.gameDate : this.selectedDate;
+        // get data from the API. optional: can override here with custom date, pass in year, month and day, in YYYY, MM and DD respectively
+        this.setData();
     },
     // today - tracks of the current user's date
     // selectedDate - tracks date in the date picker
@@ -80,7 +83,8 @@ export default {
     // favTeam - default set to B Jays, can be changed in the UI
     data() {
         return {
-            today: '',
+            updated: false,
+            today: moment(),
             selectedDate: '',
             receivedDate: '',
             nextDayDate: '',
@@ -102,6 +106,7 @@ export default {
             this.$route.query.gameDate = this.selectedDate;
             // if valid, convert date and pass on to setData to get new scoreboard from API
             var update = moment(newDate).isValid() ? moment(newDate) : this.today;
+            // get data from the API. optional: can override here with custom date, pass in year, month and day, in YYYY, MM and DD respectively
             this.setData(update.format("YYYY"),update.format("MM"),update.format("DD"));
         },
         // watch favTeam for changes
@@ -111,6 +116,10 @@ export default {
         }
     },
     methods: {
+        // relevant ops to update UI as needed go here
+        updateUI: function() {
+            this.updated = true;
+        },
         setData: _.debounce(function(year = this.today.format("YYYY"),month = this.today.format("MM"),day = this.today.format("DD")) {
             // this method is used to get and process data from the MLB api. default date is the current user's date. takes 3 parameters.
             // inject year month and day into API URL, get scoreboard
@@ -130,7 +139,7 @@ export default {
                 }
                 // for each game, extract only necessary fields
                 this.games = _.map(this.games, function(data) {
-                    return _.pick(data,['home_team_name','away_team_name','status.status','linescore.r','game_data_directory','game_pk']);
+                    return _.pick(data,['home_team_name','away_team_name','status.status','linescore.r','game_data_directory','game_pk','location','venue','winning_pitcher','losing_pitcher','home_runs']);
                 });
                 // expensive function, limit runs. flat Map into array team names from each game. then eliminate duplicates by value
                 if (this.games!==undefined && this.games.length!==0) {
@@ -140,10 +149,14 @@ export default {
                 }
                 // sort list by favorite
                 this.sortByFav();
+                // update UI
+                this.updateUI();
             })
             .catch((error) => {
                 // FUTURE: better error handling
                 console.log(error);
+                // update UI
+                this.updateUI();
             });
         }, 500),
         sortByFav: function(teamName = this.favTeam) {
@@ -165,6 +178,9 @@ export default {
 a {
   color: #000;
   text-decoration: none;
+}
+.primary_font {
+    font-family: 'Avenir', Helvetica, Arial, sans-serif;
 }
 .container.games {
     grid-area: data;
@@ -201,7 +217,7 @@ a {
 .table_games {
     width: 100%;
 }
-.table_none {
+.no_data {
     font-size: 2rem;
     padding: 3rem 0rem;
     color: #F56C6C;

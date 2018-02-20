@@ -2,9 +2,14 @@
   <div class="container detail">
     <div class="main">
         <!-- use computed prop here for date -->
-        <div class="game_day">{{ readableDate }}</div>
+        <div class="section game_details">
+            <span class="game_day" v-if="readableDate!==undefined">{{ readableDate }}</span>
+            <span class="game_location" v-if="gameLocation!==undefined && gameLocation!==null"><span class="pipe">|</span>{{ gameLocation }}</span>
+            <span class="game_venue" v-if="gameVenue!==undefined && gameVenue!==null"><span class="pipe">|</span>{{ gameVenue }}</span>
+        </div>
         <!-- short circuit and don't show unless data exists -->
-        <div class="innings_section" v-show="this.linescore!==undefined && this.linescore.length!=[]">
+        <div class="section innings_section" v-if="this.linescore.length!==0">
+            <h3>Linescore</h3>
             <table class="innings_table">
                 <!-- key needed for rendered tags so vue can update correctly -->
                 <thead>
@@ -25,8 +30,39 @@
                 </tbody>
             </table>
         </div>
+        <!-- winning / losing pitcher and home runs -->
+        <div class="section players_section" v-if="homerunData!==null || this.losing_pitcher!==null || this.winning_pitcher!==null">
+            <h3>Highlights</h3>
+            <div class="winning_pitcher" v-if="this.winning_pitcher!==null">
+                <span class="player_label">Winning Pitcher:</span>
+                <span class="player_number">{{ this.winning_pitcher.number }}</span>
+                <span class="player_name">{{ `${this.winning_pitcher.last} ${this.winning_pitcher.first}` }}</span>
+            </div>
+            <div class="pitcher" v-if="this.losing_pitcher!==null">
+                <span class="player_label">Losing Pitcher:</span>
+                <span class="player_number">{{ this.losing_pitcher.number }}</span>
+                <span class="player_name">{{ `${this.losing_pitcher.last} ${this.losing_pitcher.first}` }}</span>
+            </div>
+            <div class="home_runs" v-if="homerunData!==null && homerunData.length>=1">
+                <span class="player_label">Home Runs:</span>
+                <el-table :data="homerunData" class="homerun_table">
+                    <el-table-column label="Name" align="center" width="150">
+                        <template slot-scope="props">
+                            <p>{{ `${props.row.name_display_roster} (${props.row.team_code.toUpperCase()})` }}</p>
+                        </template>
+                    </el-table-column>
+                    <!-- dynamically populates based on stats defined -->
+                    <el-table-column :label="stat.toUpperCase()" :align="'center'" v-for="stat in homerun_stats" :key="stat">
+                        <template slot-scope="props">
+                            <p>{{ props.row[stat] }}</p>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+        </div>
         <!-- short circuit and don't show unless data exists -->
-        <div class="batters_section" v-show="this.batters.home.batter!==undefined && this.batters.home.batter.length!=[] && this.batters.away.batter.length!=[]">
+        <div class="section batters_section" v-if="this.batters.length!==0">
+            <h3>Batters</h3>
             <div class="game_teams">
                 <!-- bold buttons based on which team is being shown -->
                 <div class="toggle home_stats" v-on:click="home_default=!home_default"><span :class="home_default ? 'bold' : 'no_bold'">{{ home.name }}</span></div>
@@ -49,7 +85,7 @@
                 </el-table>
                 <!-- statistics to choose are dynamic and set in the component data. iterates and makes appr # of columns. don't show if home default is true -->
                 <el-table :data="batters.away.batter" class="batters_table" v-show="!home_default">
-                    <el-table-column label="Name" align="center">
+                    <el-table-column label="Name" align="center" width="150">
                         <template slot-scope="props">
                             <p>{{ props.row.name }}</p>
                         </template>
@@ -62,12 +98,15 @@
                 </el-table>
             </div>
         </div>
+        <!-- show if still loading, layout image in the future? -->
+        <div class="no_data" v-show="!updated">Loading...</div>
         <!-- shortcircuit and don't show if no data available -->
-        <div class="no_data" v-show="this.linescore!==undefined && this.linescore.length==[]">
-            No data yet!
+        <div class="no_data" v-if="updated && (this.linescore.length===0 || this.gameDate===undefined)">
+            <p v-if="this.linescore.length===0">No data provided by MLB yet!</p>
+            <p v-if="this.gameDate===undefined">No date provided. Please navigate back to the game listing and view details again.</p>
         </div>
         <!-- go back to the previous list view with the exact date that was originally passed -->
-        <el-button class="back_to_list" type="info"><router-link :to="{ name: 'game_list', query: { gameDate: this.$route.query.gameDate }}">Back</router-link></el-button>
+        <el-button class="back_to_list" type="info"><router-link :to="{ name: 'game_list', query: { gameDate: this.gameDate }}">Back</router-link></el-button>
     </div>
     
   </div>
@@ -79,31 +118,69 @@ import moment from 'moment';
 import _ from 'lodash';
 
 export default {
+    // FUTURE: keep some props that have been passed from other view in localstorage so it's accessible on refresh
+    props: {
+        location: {
+            type: String
+        },
+        venue: {
+            type: String
+        },
+        winning_pitcher: {
+            type: Object,
+            default: null
+        },
+        losing_pitcher: {
+            type: Object,
+            default: null
+        },
+        home_runs: {
+            type: Object,
+            default: null
+        }
+    },
     name: 'game_detail',
     beforeMount: function() {
         // get data with the URL provided in the query from the previous list view
-        this.setData(this.$route.query.gameURL);
+        this.getData();
     },
     data() {
         return {
-            gameDate: '',
+            // if not for inconsistencies in the MLB api, specifically related to formatting of dates, wouldn't have to pass gameDay in the query
+            gameDate: this.$route.query.gameDate,
+            gameLocation: '',
+            gameVenue: '',
+            gameURL: '',
             home: { 'code': '-' },
             away: { 'code': '-' },
             linescore: [],
-            batters: { home: { 'batter': []}, away: { 'batter': []}},
+            batters: [],
             batter_stats: ['ab','r','h','rbi','bb','so','avg'],
-            home_default: true
+            homerun_stats: ['inning','runners','hr','std_hr'],
+            home_default: true,
+            updated: false
         }
     },
     computed: {
         // human readable date set at start, no recalcs reqd.
         readableDate: function() {
-            return moment(this.gameDate).isValid() ? moment(this.gameDate).format('ddd MMM DD YYYY') : moment(this.$route.query.gameDate).format('ddd MMM DD YYYY');
+            return moment(this.$route.query.gameDate).format('ddd MMM DD YYYY');
+        },
+        homerunData: function() {
+            if (this.home_runs!==null) {
+                return Array.isArray(this.home_runs.player) ? [...this.home_runs.player] : [this.home_runs.player];
+            } else {
+                return null;
+            }
         }
     },
     methods: {
-        // get data from MLB API based on URL provided, no defaults here
-        setData: function(gameURL) {
+        // relevant ops to update UI as needed go here
+        updateUI: function() {
+            this.updated = true;
+        },
+        // set data from the MLB api for the current game
+        setDetails: function(gameURL) {
             // interpolate gameURL into API string
             axios.get(`https://gd2.mlb.com${gameURL}/boxscore.json`)
             .then((response) => {
@@ -114,16 +191,44 @@ export default {
                 this.away = {'name':mlbData.away_fname,'code':mlbData.away_team_code};
                 // find and set innings
                 this.linescore = mlbData.linescore.inning_line_score;
-                // find and set game date
-                this.gameDate = mlbData.date;
                 // find and set batter statistics. keep individual batter statisitics only for home and away. store in separate keys.
                 var homeBatters = _.pick(_.filter(mlbData.batting, { 'team_flag': 'home' })[0],['batter']);
                 var awayBatters = _.pick(_.filter(mlbData.batting, { 'team_flag': 'away' })[0],['batter']);
                 this.batters = {'home': homeBatters, 'away': awayBatters };
+                // update UI
+                this.updateUI();
             })
             .catch((error) => {
                 console.log(error);
+                // update UI
+                this.updateUI();
             });
+        },
+        // if URL not provided, get data from scoreboard based on date, filter the correct game based on the route param gameID and then get the URL from there
+        getData: function(gameDate = this.$route.query.gameDate) {
+            // get data that is missing, specifically the URL without which we cannot get detail data
+            if (gameDate!==undefined) {
+                var day = moment(gameDate);
+                axios.get(`https://gd2.mlb.com/components/game/mlb/year_${day.format('YYYY')}/month_${day.format('MM')}/day_${day.format('DD')}/master_scoreboard.json`)
+                .then((response) => {
+                    var currentGame =  _.filter(response.data.data.games.game,{ 'game_pk': this.$route.params.gameID })[0];
+                    // if nothing found
+                    if (currentGame!==undefined && currentGame.length!==0) {
+                        // set game URL
+                        this.gameURL = currentGame.game_data_directory;
+                        // set location and venue
+                        this.gameLocation = currentGame.location;
+                        this.gameVenue = currentGame.venue;
+                        // now we can set details based on the acquired url
+                        this.setDetails(this.gameURL);
+                    }
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
+            } else {
+                // UI catches error, nothing else to do here.
+            }
         }
     }
 }
@@ -150,7 +255,7 @@ a {
     padding: 3px;
 }
 .game_teams {
-    margin: 2rem;
+    margin: 1rem 0rem;
 }
 .toggle {
     margin: 0rem 1rem;
@@ -166,8 +271,14 @@ a {
 .no-bold {
     font-weight: normal;
 }
-.game_day {
-    font-size: 2rem;
+.game_details {
+    font-size: 1.5rem;
+    & > * {
+        display: inline-block;
+    }
+}
+.section {
+    margin: 20px 0px;
 }
 .no_data {
     color: #909399;
