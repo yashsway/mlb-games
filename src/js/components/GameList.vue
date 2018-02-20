@@ -52,7 +52,7 @@
         <!-- show if still loading, layout image in the future? -->
         <div class="no_data" v-show="!updated">Loading...</div>
         <!-- show if no games on current day -->
-        <div class="no_data" v-if="updated && games.length<=0">No games today!</div>
+        <div class="no_data" v-if="updated && this.games.length<=0">No games today!</div>
     </div>
   </div>
 </template>
@@ -131,16 +131,15 @@ export default {
                 this.receivedDate = `${mlbData.year}-${mlbData.month}-${mlbData.day}`;
                 this.nextDayDate = mlbData.next_day_date;
                 // if no games in day, set to empty array
-                if (mlbData.game!==undefined) {
-                    // If it's an array (multiple games) spread games into array, else inject single game into array
+                // If it's an array (multiple games) spread games into array, else inject single game into array
+                if(mlbData.game!==undefined){
                     this.games = Array.isArray(mlbData.game) ? [...mlbData.game] : [mlbData.game];
+                    this.games = _.map(this.games, function(data) {
+                        return _.pick(data,['home_team_name','away_team_name','status.status','linescore.r','game_data_directory','game_pk','location','venue','winning_pitcher','losing_pitcher','home_runs']);
+                    });
                 } else {
                     this.games = [];
                 }
-                // for each game, extract only necessary fields
-                this.games = _.map(this.games, function(data) {
-                    return _.pick(data,['home_team_name','away_team_name','status.status','linescore.r','game_data_directory','game_pk','location','venue','winning_pitcher','losing_pitcher','home_runs']);
-                });
                 // expensive function, limit runs. flat Map into array team names from each game. then eliminate duplicates by value
                 if (this.games!==undefined && this.games.length!==0) {
                     this.teams = _.uniqBy(_.flatMap(this.games, function(data) {
@@ -160,11 +159,13 @@ export default {
             });
         }, 500),
         sortByFav: function(teamName = this.favTeam) {
+            // if only 1 game in day, just return.
+            if (this.games.length==1) return;
             // this method is used to sort a list of games by a favorite team. default team is set in data object. two parameters: one for a team and one for the unmanipulated list of games
             // find game objects that contain a home_team or away_team equal to fav team name, then spread rest of the array that don't contain fav team after it
             var sorted = [ _.find(this.games, function(g) { return g.home_team_name == teamName || g.away_team_name == teamName; }), ...(_.filter(this.games, function(data) { return data.home_team_name != teamName && data.away_team_name != teamName; }))];
             // if any undefined present in the sorted list, set to blank, else store games as the sorted list
-            this.games = sorted.includes(undefined) ? [] : sorted;
+            this.games = sorted.includes(undefined) ? [...(_.filter(this.games, function(data) { return data!==undefined; }))] : sorted;
         },
         dateSlide: function(slide) {
             this.selectedDate = (slide=='asc') ? moment(this.receivedDate).add(1,'days')._d : moment(this.receivedDate).subtract(1,'days')._d;

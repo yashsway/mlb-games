@@ -4,11 +4,11 @@
         <!-- use computed prop here for date -->
         <div class="section game_details">
             <span class="game_day" v-if="readableDate!==undefined">{{ readableDate }}</span>
-            <span class="game_location" v-if="gameLocation!==undefined && gameLocation!==null"><span class="pipe">|</span>{{ gameLocation }}</span>
-            <span class="game_venue" v-if="gameVenue!==undefined && gameVenue!==null"><span class="pipe">|</span>{{ gameVenue }}</span>
+            <span class="game_location" v-if="this.gameLocation!==undefined && this.gameLocation!==null"><span class="pipe">|</span>{{ this.gameLocation }}</span>
+            <span class="game_venue" v-if="this.gameVenue!==undefined && this.gameVenue!==null"><span class="pipe">|</span>{{ this.gameVenue }}</span>
         </div>
         <!-- short circuit and don't show unless data exists -->
-        <div class="section innings_section" v-if="this.linescore.length!==0">
+        <div class="section innings_section" v-if="Array.isArray(linescore) && linescore.length>1">
             <h3>Linescore</h3>
             <table class="innings_table">
                 <!-- key needed for rendered tags so vue can update correctly -->
@@ -211,8 +211,9 @@ export default {
                 var day = moment(gameDate);
                 axios.get(`https://gd2.mlb.com/components/game/mlb/year_${day.format('YYYY')}/month_${day.format('MM')}/day_${day.format('DD')}/master_scoreboard.json`)
                 .then((response) => {
-                    var currentGame =  _.filter(response.data.data.games.game,{ 'game_pk': this.$route.params.gameID })[0];
-                    // if nothing found
+                    // filter can't be performed on objects
+                    var currentGame =  Array.isArray(response.data.data.games.game) ? _.filter([...response.data.data.games.game],{ 'game_pk': this.$route.params.gameID })[0] : _.filter([response.data.data.games.game],{ 'game_pk': this.$route.params.gameID })[0];
+                    // if something found
                     if (currentGame!==undefined && currentGame.length!==0) {
                         // set game URL
                         this.gameURL = currentGame.game_data_directory;
@@ -221,10 +222,16 @@ export default {
                         this.gameVenue = currentGame.venue;
                         // now we can set details based on the acquired url
                         this.setDetails(this.gameURL);
+                    } else {
+                        // if nothing found for some strange reason where gameID isn't in this set of games
+                        // TODO: better error handling here
+                        this.updateUI()
                     }
                 })
                 .catch((error) => {
                     console.log(error);
+                    // update UI
+                    this.updateUI();
                 });
             } else {
                 // UI catches error, nothing else to do here.
