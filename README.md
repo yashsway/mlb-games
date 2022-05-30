@@ -38,5 +38,6 @@ You can also check out the deployed app on: [Deployed on Heroku](https://yash-ml
 
 ## TODO
 - breakdown certain pieces in views to smaller components for more robustness
-- fix ESLint not detecting PostCSS and CSSNext
+- fix ESLint not detecting PostCSS and CSSNext **_done_**
 - construct component methods around promises, especially when method itself contains an async
+- Rewrite all CSS with BEM methodology

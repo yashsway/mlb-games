@@ -28,7 +28,7 @@
             <el-table-column label="Games & Status" align="center">
                 <template slot-scope="props">
                     <!-- set link to game detail view with required params (has props) and query vars -->
-                    <router-link :to="{ name: 'game_detail', params: { gameID: props.row.game_pk, location: props.row.location, venue: props.row.venue, winning_pitcher: props.row.winning_pitcher, losing_pitcher: props.row.losing_pitcher, home_runs: props.row.home_runs }, query: { gameDate: receivedDate, gameURL: props.row.game_data_directory }}">
+                    <router-link :to="{ name: 'game_detail', params: { gameID: props.row.game_pk, location: props.row.location, venue: props.row.venue, winning_pitcher: props.row.winning_pitcher, losing_pitcher: props.row.losing_pitcher, home_runs: props.row.home_runs }, query: { gameDate: receivedDate, favTeam: favTeam }}">
                         <p v-if="props.row.linescore!==undefined" :class="props.row.linescore.r.home > props.row.linescore.r.away ? 'bold_team' : ''"><i class="el-icon-star-on" v-show="props.row.home_team_name==favTeam"></i>{{ props.row.home_team_name }}</p>
                         <p v-if="props.row.linescore!==undefined" :class="props.row.linescore.r.away > props.row.linescore.r.home ? 'bold_team' : ''"><i class="el-icon-star-on" v-show="props.row.away_team_name==favTeam"></i>{{ props.row.away_team_name }}</p>
                         <p v-if="props.row.linescore!==undefined" class="italic_status">{{ props.row.status.status }}</p>
@@ -41,7 +41,7 @@
             <el-table-column label="Score" align="center">
                 <template slot-scope="props">
                     <!-- set link to game detail view with required params (has props) and query vars -->
-                    <router-link :to="{ name: 'game_detail', params: { gameID: props.row.game_pk, location: props.row.location, venue: props.row.venue, winning_pitcher: props.row.winning_pitcher, losing_pitcher: props.row.losing_pitcher, home_runs: props.row.home_runs }, query: { gameDate: receivedDate, gameURL: props.row.game_data_directory }}">
+                    <router-link :to="{ name: 'game_detail', params: { gameID: props.row.game_pk, location: props.row.location, venue: props.row.venue, winning_pitcher: props.row.winning_pitcher, losing_pitcher: props.row.losing_pitcher, home_runs: props.row.home_runs }, query: { gameDate: receivedDate, favTeam: favTeam }}">
                         <p v-if="props.row.linescore!==undefined">{{ props.row.linescore.r.home }}</p>
                         <p v-if="props.row.linescore!==undefined">{{ props.row.linescore.r.away }}</p>
                         <p class="italic_status">-</p>
@@ -72,6 +72,8 @@ export default {
     beforeMount: function() {
         // set date if it exists already
         this.selectedDate = this.$route.query.gameDate!==undefined ? this.$route.query.gameDate : this.selectedDate;
+        // set favTeam if it exists in query
+        this.favTeam = this.$route.query.favTeam!==undefined && this.$route.query.favTeam!==null ? this.$route.query.favTeam : this.favTeam;
         // get data from the API. optional: can override here with custom date, pass in year, month and day, in YYYY, MM and DD respectively
         this.setData();
     },
@@ -174,7 +176,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang='postcss' scoped>
 /* Kept styles as close to name conventions as possible. Could be incredibly more modular with PostCSS @apply and :root */
 a {
   color: #000;
@@ -208,7 +210,7 @@ a {
     font-family: inherit;
     align-self: center;
     margin: 10px;
-    & .picker_label {
+    & > .picker_label {
         color: #909399;
     }
     & > * {

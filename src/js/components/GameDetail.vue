@@ -106,7 +106,7 @@
             <p v-if="this.gameDate===undefined">No date provided. Please navigate back to the game listing and view details again.</p>
         </div>
         <!-- go back to the previous list view with the exact date that was originally passed -->
-        <el-button class="back_to_list" type="info"><router-link :to="{ name: 'game_list', query: { gameDate: this.gameDate }}">Back</router-link></el-button>
+        <el-button class="back_to_list" type="info"><router-link :to="{ name: 'game_list', query: { gameDate: this.gameDate, favTeam: this.$route.query.favTeam }}">Back</router-link></el-button>
     </div>
     
   </div>
@@ -241,7 +241,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang='postcss' scoped>
 /* Kept styles as close to name conventions as possible. Could be incredibly more modular with PostCSS @apply and :root */
 a {
   color: #000;

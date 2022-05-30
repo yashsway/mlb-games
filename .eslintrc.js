@@ -12,7 +12,8 @@ module.exports = {
   extends: 'airbnb-base',
   // required to lint *.vue files
   plugins: [
-    'html'
+    'html',
+    'eslint-config-postcss'
   ],
   // check if imports actually resolve
   'settings': {
