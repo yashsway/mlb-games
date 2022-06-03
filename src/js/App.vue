@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <div class="container branding">
-      <img src="../assets/kg_logo.svg" id="logo">
+      <h1>MLB Games</h1>
     </div>
     <router-view></router-view>
   </div>
@@ -31,17 +31,17 @@ export default {
   ". data ."
   ". footer .";
   /* ESLint giving me trouble here for weird reasons, the following media query format is infact supported by CSSNext */
-  @media only screen 
-  and (width >= 557px) 
-  and (width <= 1024px) 
+  @media only screen
+  and (width >= 557px)
+  and (width <= 1024px)
   and (-webkit-min-device-pixel-ratio: 1) {
     grid-template-columns: 5% auto 5%;
   }
-  @media only screen 
-  and (width >= 0px) 
-  and (width <= 667px) 
+  @media only screen
+  and (width >= 0px)
+  and (width <= 667px)
   and (-webkit-min-device-pixel-ratio: 2)
-  and (orientation: portrait) { 
+  and (orientation: portrait) {
     grid-template-columns: 1% auto 1%;
   }
 }
@@ -51,17 +51,17 @@ export default {
   flex-direction: column;
   justify-content: center;
   margin: 0% 25%;
-  @media only screen 
-  and (width >= 667px) 
-  and (width <= 1024px) 
+  @media only screen
+  and (width >= 667px)
+  and (width <= 1024px)
   and (-webkit-min-device-pixel-ratio: 1) {
     margin: 0% 15%;
   }
-  @media only screen 
-  and (width >= 0px) 
-  and (width <= 667px) 
+  @media only screen
+  and (width >= 0px)
+  and (width <= 667px)
   and (-webkit-min-device-pixel-ratio: 2)
-  and (orientation: portrait) { 
+  and (orientation: portrait) {
     margin: 0% 5%;
   }
 }
@@ -73,11 +73,11 @@ export default {
 .container {
   padding: 1rem 5rem;
   justify-self: stretch;
-  @media only screen 
-  and (width >= 0px) 
-  and (width <= 667px) 
+  @media only screen
+  and (width >= 0px)
+  and (width <= 667px)
   and (-webkit-min-device-pixel-ratio: 2)
-  and (orientation: portrait) { 
+  and (orientation: portrait) {
     padding: 0.5rem 2rem;
   }
 }

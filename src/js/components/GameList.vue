@@ -24,7 +24,7 @@
     </div>
     <div class="main">
         <el-table :data="games" class="table_games" v-if="games.length>=1">
-            <!-- Really odd behavior here. for some reason I'm unable to define a separate template in the same scope for a scenario where linescore isn't defined. Temporarily put all tags in the same scope, bit repetitive--> 
+            <!-- Really odd behavior here. for some reason I'm unable to define a separate template in the same scope for a scenario where linescore isn't defined. Temporarily put all tags in the same scope, bit repetitive-->
             <el-table-column label="Games & Status" align="center">
                 <template slot-scope="props">
                     <!-- set link to game detail view with required params (has props) and query vars -->
@@ -202,8 +202,8 @@ a {
     flex: 0 1 auto;
 }
 .current_date {
-    font-size: 2rem;
-    font-weight: bold;
+    font-size: 1.25rem;
+    font-weight: 600;
     margin: 5px 0px;
 }
 .picker {

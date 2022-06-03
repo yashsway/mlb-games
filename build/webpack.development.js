@@ -31,10 +31,12 @@ const webpackConfig = {
       inject: true,
     }),
     new FriendlyErrorsPlugin(),
+    new webpack.LoaderOptionsPlugin({
+      infrastructureLogging: {
+        level: 'info',
+      },
+    })
   ],
-  infrastructureLogging: {
-    level: 'info',
-  },
 };
 
 module.exports = webpackConfig;
